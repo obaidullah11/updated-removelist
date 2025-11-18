@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Booking Requested. - RemoveAlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3B82F6;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #059669;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .success-icon {
+            text-align: center;
+            font-size: 48px;
+            color: #059669;
+            margin-bottom: 20px;
+        }
+        .booking-details {
+            background-color: #F0FDF4;
+            border: 2px solid #059669;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+            padding: 8px 0;
+            border-bottom: 1px solid #D1FAE5;
+        }
+        .detail-row:last-child {
+            border-bottom: none;
+            font-weight: bold;
+            font-size: 16px;
+        }
+        .detail-label {
+            font-weight: bold;
+            color: #065F46;
+        }
+        .detail-value {
+            color: #047857;
+        }
+        .contact-info {
+            background-color: #EFF6FF;
+            border-left: 4px solid #3B82F6;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E2E8F0;
+            font-size: 14px;
+            color: #718096;
+        }
+        .next-steps {
+            background-color: #FFFBEB;
+            border-left: 4px solid #F59E0B;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #3B82F6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">RemoveAlist</div>
+            <p>Your Moving Made Simple</p>
+        </div>
+
+        <div class="success-icon">✅</div>
+        <h1>Booking Requested!</h1>
+
+        <p>Hi {{ first_name }},</p>
+
+        <p>Great news! Your move has been scheduled successfully. Here are your booking details:</p>
+
+        <div class="booking-details">
+            <div class="detail-row">
+                <span class="detail-label">📅 Date:</span>
+                <span class="detail-value">{{ move_date }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">🕐 Time:</span>
+                <span class="detail-value">{{ time_slot }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">📞 Contact Number:</span>
+                <span class="detail-value">{{ phone_number }}</span>
+            </div>
+            <div class="detail-row">
+                <span class="detail-label">🎫 Confirmation Number:</span>
+                <span class="detail-value">{{ confirmation_number }}</span>
+            </div>
+        </div>
+
+        <div class="next-steps">
+            <h3>📋 What's Next?</h3>
+            <ul>
+                <li><strong>Save this confirmation number:</strong> {{ confirmation_number }}</li>
+                <li><strong>Check your moving checklist</strong> to stay on track</li>
+                <li><strong>Prepare your inventory</strong> and pack room by room</li>
+                <li><strong>Upload floor plans</strong> to help our team</li>
+            </ul>
+        </div>
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ frontend_url }}/dashboard" class="btn">View My Dashboard</a>
+            <a href="{{ frontend_url }}/move/timeline" class="btn">Check Timeline</a>
+        </div>
+
+        <div class="contact-info">
+            <h3>📞 Need to Reach Us?</h3>
+            <p>{{ contact_info }}</p>
+            <p>We'll also contact you at <strong>{{ phone_number }}</strong> if we need to reach you before your move date.</p>
+        </div>
+
+        <p><strong>Important Reminders:</strong></p>
+        <ul>
+            <li>Please be ready 15 minutes before your scheduled time</li>
+            <li>Ensure all items are properly packed and labeled</li>
+            <li>Have your confirmation number ready: <strong>{{ confirmation_number }}</strong></li>
+            <li>Keep valuable items with you during the move</li>
+        </ul>
+
+        <div class="footer">
+            <p>Best regards,<br>
+            <strong>The RemoveAlist Team</strong></p>
+
+            <p>Questions about your booking? Reply to this email or contact us at <a href="mailto:contactus@removealist.au">contactus@removealist.au</a></p>
+        </div>
+    </div>
+</body>
+</html>

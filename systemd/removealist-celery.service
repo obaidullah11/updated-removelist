@@ -1,0 +1,36 @@
+[Unit]
+Description=RemoveList Celery Worker
+After=network.target postgresql.service redis.service
+Requires=postgresql.service redis.service
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/removealist-backend
+Environment=DJANGO_SETTINGS_MODULE=removealist_backend.settings_production
+ExecStart=/opt/removealist-backend/venv/bin/celery -A removealist_backend worker --detach --loglevel=info --logfile=/var/log/celery/worker.log --pidfile=/var/run/celery/worker.pid
+ExecStop=/bin/kill -s TERM $MAINPID
+ExecReload=/bin/kill -s HUP $MAINPID
+PIDFile=/var/run/celery/worker.pid
+Restart=always
+RestartSec=10
+
+# Create necessary directories
+RuntimeDirectory=celery
+RuntimeDirectoryMode=0755
+LogsDirectory=celery
+LogsDirectoryMode=0755
+
+# Security settings
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+ReadWritePaths=/opt/removealist-backend/logs /opt/removealist-backend/media /var/log/celery /var/run/celery
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+
+[Install]
+WantedBy=multi-user.target

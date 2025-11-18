@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test File Upload</title>
+</head>
+<body>
+    <h2>Test Partner Document Upload</h2>
+    <form method="post" action="http://localhost:8000/api/verification/partner/documents/submit/" enctype="multipart/form-data">
+        <!-- Add your CSRF token if needed -->
+        <!-- <input type="hidden" name="csrfmiddlewaretoken" value="your-csrf-token"> -->
+        
+        <p>
+            <label>Document 1:</label>
+            <input type="file" name="document_1" accept=".pdf,.jpg,.png">
+        </p>
+        
+        <p>
+            <label>Document 2:</label>
+            <input type="file" name="document_2" accept=".pdf,.jpg,.png">
+        </p>
+        
+        <p>
+            <label>Document 3:</label>
+            <input type="file" name="document_3" accept=".pdf,.jpg,.png">
+        </p>
+        
+        <p>
+            <label>Document 4:</label>
+            <input type="file" name="document_4" accept=".pdf,.jpg,.png">
+        </p>
+        
+        <!-- Add any other fields you need -->
+        <p>
+            <label>Notes:</label>
+            <input type="text" name="notes" placeholder="Optional notes">
+        </p>
+        
+        <p>
+            <input type="submit" value="Upload Documents">
+        </p>
+    </form>
+    
+    <script>
+        // Alternative: Use fetch API with FormData
+        function testWithFetch() {
+            const formData = new FormData();
+            const fileInput = document.querySelector('input[name="document_1"]');
+            
+            if (fileInput.files[0]) {
+                formData.append('document_1', fileInput.files[0]);
+            }
+            
+            fetch('http://localhost:8000/api/verification/partner/documents/submit/', {
+                method: 'POST',
+                headers: {
+                    'Authorization': 'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNzU2OTA1MDIzLCJpYXQiOjE3NTY5MDQxMjMsImp0aSI6Ijg1Y2E5ZjAwZDZjNDQ4YzU5NjQ0NzM5ZTUxN2VjZTg2IiwidXNlcl9pZCI6IjgzODg1ZmI4LWFiZGMtNDkxMS1iMDRhLWI0ZjczNGY0NTg3MiJ9.G3pAKXE-WOVhSiztfbweWoqpa30MoS5hXdyAyQGwAqg', // Replace with actual token
+                },
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => console.log('Success:', data))
+            .catch(error => console.error('Error:', error));
+        }
+    </script>
+</body>
+</html>

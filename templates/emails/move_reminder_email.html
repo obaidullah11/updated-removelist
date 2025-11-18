@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Move is Coming Up - RemoveAlist</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            background-color: #ffffff;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .logo {
+            font-size: 28px;
+            font-weight: bold;
+            color: #3B82F6;
+            margin-bottom: 10px;
+        }
+        h1 {
+            color: #F59E0B;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .countdown {
+            text-align: center;
+            background: linear-gradient(135deg, #F59E0B, #D97706);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        .countdown-number {
+            font-size: 48px;
+            font-weight: bold;
+            display: block;
+        }
+        .countdown-text {
+            font-size: 18px;
+            margin-top: 10px;
+        }
+        .progress-section {
+            background-color: #F0FDF4;
+            border-left: 4px solid #059669;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .progress-bar {
+            background-color: #E5E7EB;
+            border-radius: 10px;
+            overflow: hidden;
+            height: 20px;
+            margin: 10px 0;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #059669, #10B981);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+        .checklist-items {
+            background-color: #FFFBEB;
+            border-left: 4px solid #F59E0B;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+        .btn {
+            display: inline-block;
+            background-color: #3B82F6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: bold;
+            margin: 10px 5px;
+        }
+        .btn-primary {
+            background-color: #F59E0B;
+        }
+        .btn-secondary {
+            background-color: #059669;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #E2E8F0;
+            font-size: 14px;
+            color: #718096;
+        }
+        .urgent-tasks {
+            background-color: #FEF2F2;
+            border-left: 4px solid #EF4444;
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="logo">RemoveAlist</div>
+            <p>Your Moving Made Simple</p>
+        </div>
+
+        <h1>🚚 Your Move is Coming Up!</h1>
+
+        <p>Hi {{ first_name }},</p>
+
+        <p>This is a friendly reminder that your move is approaching. Here's what you need to know:</p>
+
+        <div class="countdown">
+            <span class="countdown-number">{{ days_remaining }}</span>
+            <span class="countdown-text">
+                {% if days_remaining == 1 %}
+                    Day Until Your Move!
+                {% else %}
+                    Days Until Your Move
+                {% endif %}
+            </span>
+            <div style="margin-top: 15px; font-size: 16px;">
+                📅 <strong>{{ move_date }}</strong>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <h3>📊 Your Progress</h3>
+            <p>You've completed <strong>{{ checklist_progress }}%</strong> of your moving checklist:</p>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: {{ checklist_progress }}%;"></div>
+            </div>
+            <p style="font-size: 14px; color: #6B7280;">Keep up the great work! You're {% if checklist_progress >= 80 %}almost{% elif checklist_progress >= 50 %}well{% else %}getting{% endif %} prepared for your move.</p>
+        </div>
+
+        {% if days_remaining <= 3 %}
+        <div class="urgent-tasks">
+            <h3>🚨 Last-Minute Essentials</h3>
+            <ul>
+                <li><strong>Pack a survival kit</strong> with essentials for the first day</li>
+                <li><strong>Confirm details</strong> with your moving team</li>
+                <li><strong>Prepare cash</strong> for tips and unexpected expenses</li>
+                <li><strong>Charge all devices</strong> and pack chargers accessibly</li>
+                <li><strong>Take photos</strong> of valuable items for insurance</li>
+            </ul>
+        </div>
+        {% endif %}
+
+        {% if checklist_progress < 80 %}
+        <div class="checklist-items">
+            <h3>📋 Don't Forget These Important Tasks</h3>
+            <ul>
+                <li>Notify utility companies of your move</li>
+                <li>Update your address with banks and subscriptions</li>
+                <li>Pack room by room using our inventory system</li>
+                <li>Arrange childcare and pet care for moving day</li>
+                <li>Prepare cleaning supplies for both locations</li>
+            </ul>
+        </div>
+        {% endif %}
+
+        <div style="text-align: center; margin: 30px 0;">
+            <a href="{{ frontend_url }}/move/checklist" class="btn btn-primary">Complete Checklist</a>
+            <a href="{{ frontend_url }}/move/timeline" class="btn btn-secondary">View Timeline</a>
+            <a href="{{ frontend_url }}/inventory" class="btn">Manage Inventory</a>
+        </div>
+
+        <div style="background-color: #EFF6FF; border-left: 4px solid #3B82F6; padding: 15px; margin: 20px 0; border-radius: 4px;">
+            <h3>💡 Pro Tips for Moving Day</h3>
+            <ul>
+                <li><strong>Start early:</strong> Be ready 15 minutes before your scheduled time</li>
+                <li><strong>Stay accessible:</strong> Keep your phone charged and nearby</li>
+                <li><strong>Have essentials ready:</strong> Water, snacks, and important documents</li>
+                <li><strong>Do a final walkthrough:</strong> Check all rooms, closets, and storage areas</li>
+            </ul>
+        </div>
+
+        {% if days_remaining == 1 %}
+        <div style="background-color: #FEF3C7; border: 2px solid #F59E0B; padding: 20px; border-radius: 8px; text-align: center; margin: 20px 0;">
+            <h3 style="color: #92400E; margin-top: 0;">🎯 Tomorrow is the Big Day!</h3>
+            <p style="color: #92400E; margin-bottom: 0;">Get a good night's sleep and remember - we've got this! Your RemoveAlist team is ready to make your move smooth and stress-free.</p>
+        </div>
+        {% endif %}
+
+        <div class="footer">
+            <p>Best regards,<br>
+            <strong>The RemoveAlist Team</strong></p>
+
+            <p>Questions or need to make changes? Contact us at <a href="mailto:contactus@removealist.au">contactus@removealist.au</a> or call +61406368850</p>
+
+            <p style="font-size: 12px; color: #9CA3AF;">You're receiving this because you have an upcoming move with RemoveAlist. <a href="{{ frontend_url }}/unsubscribe">Unsubscribe from reminders</a></p>
+        </div>
+    </div>
+</body>
+</html>

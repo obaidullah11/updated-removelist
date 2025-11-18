@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floor Plan Analysis API Test</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            margin: 40px; 
+            background-color: #f5f5f5;
+        }
+        .container { 
+            max-width: 800px; 
+            margin: 0 auto; 
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .form-group { 
+            margin-bottom: 20px; 
+        }
+        label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: bold; 
+            color: #333;
+        }
+        input[type="file"] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 2px dashed #ddd; 
+            border-radius: 4px; 
+            background: #fafafa;
+        }
+        input[type="url"] { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ddd; 
+            border-radius: 4px; 
+        }
+        button { 
+            background: #28a745; 
+            color: white; 
+            padding: 12px 24px; 
+            border: none; 
+            border-radius: 4px; 
+            cursor: pointer; 
+            font-size: 16px;
+            margin-right: 10px;
+        }
+        button:hover { 
+            background: #218838; 
+        }
+        button:disabled { 
+            background: #6c757d; 
+            cursor: not-allowed;
+        }
+        .info-btn {
+            background: #17a2b8;
+        }
+        .info-btn:hover {
+            background: #138496;
+        }
+        .result { 
+            margin-top: 30px; 
+            padding: 20px; 
+            border-radius: 4px; 
+            white-space: pre-wrap;
+        }
+        .success { 
+            background: #d4edda; 
+            border: 1px solid #c3e6cb; 
+            color: #155724; 
+        }
+        .error { 
+            background: #f8d7da; 
+            border: 1px solid #f5c6cb; 
+            color: #721c24; 
+        }
+        .info {
+            background: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            color: #856404;
+        }
+        .file-info {
+            margin-top: 10px;
+            padding: 10px;
+            background: #e9ecef;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        .api-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+        .api-info h3 {
+            margin-top: 0;
+            color: #495057;
+        }
+        .endpoint {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 5px 8px;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        .json-output {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 15px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🏠 Floor Plan Analysis API Test</h1>
+        
+        <div class="api-info">
+            <h3>API Information</h3>
+            <p><strong>Endpoint:</strong> <span class="endpoint">POST http://127.0.0.1:8000/api/inventory/analyze-floor-plan/</span></p>
+            <p><strong>Content-Type:</strong> multipart/form-data</p>
+            <p><strong>Authentication:</strong> None required</p>
+            <p><strong>Field Name:</strong> floor_plan</p>
+            <p><strong>Supported Formats:</strong> .jpg, .jpeg, .png, .gif, .bmp</p>
+            <p><strong>Max File Size:</strong> 10MB</p>
+        </div>
+
+        <form id="floorPlanForm">
+            <div class="form-group">
+                <label for="floorPlan">Select Floor Plan Image:</label>
+                <input type="file" id="floorPlan" accept=".jpg,.jpeg,.png,.gif,.bmp" required>
+                <div id="fileInfo" class="file-info" style="display: none;"></div>
+            </div>
+            
+            <div class="form-group">
+                <label for="apiUrl">API URL (optional - defaults to localhost):</label>
+                <input type="url" id="apiUrl" value="http://127.0.0.1:8000/api/inventory/analyze-floor-plan/" placeholder="http://127.0.0.1:8000/api/inventory/analyze-floor-plan/">
+            </div>
+            
+            <button type="submit" id="analyzeBtn">🔍 Analyze Floor Plan</button>
+            <button type="button" id="serviceInfoBtn" class="info-btn">ℹ️ Get Service Info</button>
+        </form>
+        
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // File input change handler
+        document.getElementById('floorPlan').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            const fileInfo = document.getElementById('fileInfo');
+            
+            if (file) {
+                const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+                fileInfo.innerHTML = `
+                    <strong>Selected File:</strong> ${file.name}<br>
+                    <strong>Size:</strong> ${sizeInMB} MB<br>
+                    <strong>Type:</strong> ${file.type}
+                `;
+                fileInfo.style.display = 'block';
+                
+                // Check file size
+                if (file.size > 10 * 1024 * 1024) {
+                    fileInfo.innerHTML += '<br><span style="color: #dc3545;"><strong>Warning:</strong> File size exceeds 10MB limit</span>';
+                }
+            } else {
+                fileInfo.style.display = 'none';
+            }
+        });
+
+        // Service info button handler
+        document.getElementById('serviceInfoBtn').addEventListener('click', async function() {
+            const resultDiv = document.getElementById('result');
+            const apiUrl = document.getElementById('apiUrl').value || 'http://127.0.0.1:8000/api/inventory/analyze-floor-plan/';
+            const serviceInfoUrl = apiUrl.replace('analyze-floor-plan/', 'service-info/');
+            
+            resultDiv.innerHTML = `
+                <div class="result loading">
+                    <h3>⏳ Getting Service Information...</h3>
+                    <p>Fetching API service details...</p>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(serviceInfoUrl, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result info">
+                            <h3>ℹ️ Service Information</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <div class="json-output">${JSON.stringify(data, null, 2)}</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Failed to Get Service Info</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Message:</strong> ${data.message || 'Unknown error'}</p>
+                            <div class="json-output">${JSON.stringify(data, null, 2)}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure the Django server is running on the specified URL.</p>
+                    </div>
+                `;
+            }
+        });
+
+        // Form submit handler
+        document.getElementById('floorPlanForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const floorPlanFile = document.getElementById('floorPlan').files[0];
+            const apiUrl = document.getElementById('apiUrl').value || 'http://127.0.0.1:8000/api/inventory/analyze-floor-plan/';
+            const resultDiv = document.getElementById('result');
+            const analyzeBtn = document.getElementById('analyzeBtn');
+            
+            if (!floorPlanFile) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ No File Selected</h3>
+                        <p>Please select a floor plan image file to analyze.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Disable button and show loading
+            analyzeBtn.disabled = true;
+            analyzeBtn.textContent = '⏳ Analyzing...';
+            
+            resultDiv.innerHTML = `
+                <div class="result loading">
+                    <h3>⏳ Analyzing Floor Plan...</h3>
+                    <p>Processing ${floorPlanFile.name} (${(floorPlanFile.size / (1024 * 1024)).toFixed(2)} MB)</p>
+                    <p>This may take a few moments depending on the image complexity...</p>
+                </div>
+            `;
+            
+            try {
+                const formData = new FormData();
+                formData.append('floor_plan', floorPlanFile);
+                
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    resultDiv.innerHTML = `
+                        <div class="result success">
+                            <h3>✅ Analysis Successful!</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Message:</strong> ${data.message}</p>
+                            <p><strong>Rooms Detected:</strong> ${data.data.rooms_detected}</p>
+                            <p><strong>File:</strong> ${data.data.file_info.filename} (${data.data.file_info.size_bytes} bytes)</p>
+                            
+                            <h4>📊 Inventory Summary:</h4>
+                            <div class="json-output">${JSON.stringify(data.data.inventory_summary, null, 2)}</div>
+                            
+                            <h4>🏠 Detailed Rooms:</h4>
+                            <div class="json-output">${JSON.stringify(data.data.detailed_rooms, null, 2)}</div>
+                            
+                            <h4>📋 Full Response:</h4>
+                            <div class="json-output">${JSON.stringify(data, null, 2)}</div>
+                        </div>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `
+                        <div class="result error">
+                            <h3>❌ Analysis Failed</h3>
+                            <p><strong>Status:</strong> ${response.status}</p>
+                            <p><strong>Message:</strong> ${data.message || 'Unknown error'}</p>
+                            <div class="json-output">${JSON.stringify(data, null, 2)}</div>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <div class="result error">
+                        <h3>❌ Network Error</h3>
+                        <p><strong>Error:</strong> ${error.message}</p>
+                        <p>Make sure the Django server is running on the specified URL.</p>
+                    </div>
+                `;
+            } finally {
+                // Re-enable button
+                analyzeBtn.disabled = false;
+                analyzeBtn.textContent = '🔍 Analyze Floor Plan';
+            }
+        });
+    </script>
+</body>
+</html>
