@@ -21,7 +21,6 @@ from .serializers import (
     HighValueItemCreateSerializer, HighValueItemDetailSerializer, HighValueItemListSerializer,
     StorageItemCreateSerializer, StorageItemDetailSerializer, StorageItemListSerializer
 )
-from .services.floor_plan_analyzer import FloorPlanAnalyzer
 from .services.ai_floor_plan_analyzer import AIFloorPlanAnalyzer
 from PIL import Image
 import os
@@ -90,11 +89,11 @@ def analyze_floor_plan_service(request):
             
             logger.info(f"Analyzing floor plan: {floor_plan_file.name} ({floor_plan_file.size} bytes)")
             
-            # Initialize the floor plan analyzer
-            analyzer = FloorPlanAnalyzer()
+            # Use AI analyzer for floor plan analysis
+            ai_analyzer = AIFloorPlanAnalyzer()
             
-            # Analyze the floor plan (using a dummy move ID for the service)
-            analysis_result = analyzer.analyze_floor_plan_service(temp_file_path)
+            # Analyze the floor plan using AI
+            analysis_result = ai_analyzer.analyze_floor_plan_image(temp_file_path)
             
             if analysis_result['success']:
                 # Format the response data

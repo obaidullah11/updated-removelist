@@ -71,6 +71,57 @@ class AIFloorPlanAnalyzer:
             logger.error(f"Failed to initialize Google AI: {e}")
             self.model = None
     
+    def analyze_floor_plan_image(self, floor_plan_path):
+        """
+        Analyze a floor plan image (service method - doesn't require a move).
+        This is a simplified version for the floor plan analysis service endpoint.
+        
+        Args:
+            floor_plan_path: Path to the floor plan image file
+            
+        Returns:
+            dict: Analysis results
+        """
+        if not self.model:
+            return {
+                'success': False,
+                'error': 'Google AI Vision service not available. Please check configuration.'
+            }
+        
+        try:
+            # Load image
+            image = Image.open(floor_plan_path)
+            
+            # Build a generic prompt for floor plan analysis
+            prompt = """Analyze this floor plan image and extract:
+1. All room names and types
+2. Room dimensions if visible
+3. Floor levels (ground floor, first floor, etc.)
+
+Return the information in a structured format."""
+            
+            # Generate analysis using Gemini Vision
+            logger.info(f"Analyzing floor plan image: {floor_plan_path}")
+            response = self.model.generate_content([prompt, image])
+            analysis_text = response.text
+            
+            # For now, return a simple response structure
+            # In the future, this could parse the AI response to extract rooms
+            return {
+                'success': True,
+                'rooms_created': 0,  # AI analyzer doesn't create rooms without a move
+                'summary': 'Floor plan analyzed using AI',
+                'inventory_data': [],
+                'raw_analysis': analysis_text
+            }
+            
+        except Exception as e:
+            logger.error(f"Error analyzing floor plan image: {e}", exc_info=True)
+            return {
+                'success': False,
+                'error': f'Failed to analyze floor plan: {str(e)}'
+            }
+    
     def analyze_floor_plan_and_generate_inventory(self, move, floor_plan_image, is_new_property=False):
         """
         Analyze a floor plan image and generate inventory items and tasks.
@@ -196,17 +247,11 @@ class AIFloorPlanAnalyzer:
         # Check if AI is available
         if not GEMINI_AVAILABLE:
             logger.warning("Google Gemini library not available, falling back to predefined items")
-            from apps.inventory.services.floor_plan_analyzer import EnhancedFloorPlanAnalyzer
-            analyzer = EnhancedFloorPlanAnalyzer()
-            generated = analyzer.generate_room_items(room_type, 0)
-            return generated.get('regular_items', [])
+            return self._get_predefined_items(room_type)
         
         if not self.model:
             logger.warning("Google Gemini model not initialized, falling back to predefined items")
-            from apps.inventory.services.floor_plan_analyzer import EnhancedFloorPlanAnalyzer
-            analyzer = EnhancedFloorPlanAnalyzer()
-            generated = analyzer.generate_room_items(room_type, 0)
-            return generated.get('regular_items', [])
+            return self._get_predefined_items(room_type)
         
         try:
             # Build context about the move
@@ -309,18 +354,39 @@ Do not include any explanatory text. Return ONLY the JSON array starting with [ 
             
             # Fallback to predefined items if AI fails
             logger.warning(f"Falling back to predefined items for room '{room_name}'")
-            from apps.inventory.services.floor_plan_analyzer import EnhancedFloorPlanAnalyzer
-            analyzer = EnhancedFloorPlanAnalyzer()
-            generated = analyzer.generate_room_items(room_type, 0)
-            return generated.get('regular_items', [])
+            return self._get_predefined_items(room_type)
             
         except Exception as e:
             logger.error(f"Error generating items with AI for room '{room_name}': {e}", exc_info=True)
             # Fallback to predefined items
-            from apps.inventory.services.floor_plan_analyzer import EnhancedFloorPlanAnalyzer
-            analyzer = EnhancedFloorPlanAnalyzer()
-            generated = analyzer.generate_room_items(room_type, 0)
-            return generated.get('regular_items', [])
+            return self._get_predefined_items(room_type)
+    
+    def _get_predefined_items(self, room_type):
+        """
+        Get predefined items for a room type as fallback when AI is unavailable.
+        
+        Args:
+            room_type: Type of room (kitchen, bedroom, etc.)
+            
+        Returns:
+            list: List of predefined item names
+        """
+        room_items = {
+            'kitchen': ['Dining table', 'Chairs', 'Microwave', 'Toaster', 'Kitchen utensils', 'Dishes', 'Cookware', 'Cutlery'],
+            'living_room': ['Sofa', 'Coffee table', 'TV stand', 'Bookshelf', 'Lamps', 'Rug', 'Curtains', 'Cushions'],
+            'bedroom': ['Bed frame', 'Nightstand', 'Dresser', 'Lamp', 'Bedding', 'Pillows', 'Wardrobe', 'Mirror'],
+            'bathroom': ['Towels', 'Toiletries', 'Bath mat', 'Shower curtain', 'Bath accessories', 'Medicine cabinet'],
+            'dining_room': ['Dining table', 'Chairs', 'Sideboard', 'Lamp', 'Dinnerware', 'Glassware'],
+            'office': ['Desk', 'Office chair', 'Bookshelf', 'Lamp', 'Computer', 'Filing cabinet'],
+            'laundry': ['Washing machine', 'Dryer', 'Laundry basket', 'Ironing board', 'Cleaning supplies'],
+            'garage': ['Tools', 'Garden equipment', 'Sports equipment', 'Storage items', 'Workbench'],
+            'storage': ['Storage boxes', 'Seasonal items', 'Tools', 'Furniture'],
+            'basement': ['Storage boxes', 'Seasonal items', 'Tools', 'Furniture', 'Appliances'],
+            'attic': ['Storage boxes', 'Seasonal decorations', 'Old furniture', 'Memorabilia'],
+            'other': ['Furniture', 'Storage items', 'Miscellaneous items']
+        }
+        
+        return room_items.get(room_type, room_items['other'])
     
     def _build_move_context(self, move, is_new_property):
         """Build context string about the move for the AI."""
