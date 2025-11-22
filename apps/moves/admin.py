@@ -2,7 +2,7 @@
 Admin configuration for move models.
 """
 from django.contrib import admin
-from .models import Move, MoveCollaborator, TaskAssignment
+from .models import Move, MoveCollaborator, TaskAssignment, MoveExpense
 
 
 @admin.register(Move)
@@ -148,5 +148,35 @@ class TaskAssignmentAdmin(admin.ModelAdmin):
         }),
         ('Notes', {
             'fields': ('notes',)
+        }),
+    )
+
+
+@admin.register(MoveExpense)
+class MoveExpenseAdmin(admin.ModelAdmin):
+    """
+    Admin configuration for MoveExpense model.
+    """
+    list_display = [
+        'move', 'description', 'amount', 'category', 'payment_method', 
+        'expense_date', 'created_at'
+    ]
+    list_filter = ['category', 'payment_method', 'expense_date', 'created_at']
+    search_fields = [
+        'description', 'notes', 'move__current_location', 'move__destination_location'
+    ]
+    readonly_fields = ['id', 'created_at', 'updated_at']
+    ordering = ['-expense_date', '-created_at']
+    
+    fieldsets = (
+        ('Expense Details', {
+            'fields': ('move', 'description', 'amount', 'category', 'payment_method', 'expense_date')
+        }),
+        ('Additional Information', {
+            'fields': ('receipt', 'notes')
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
         }),
     )

@@ -27,13 +27,19 @@ class MovingChecklistGenerator:
         self.api_key = getattr(settings, 'GOOGLE_AI_API_KEY', None)
         
         if not GEMINI_AVAILABLE:
-            logger.error("Google Generative AI library not available")
-            self.client = None
+            logger.error("Google Generative AI library not available. Install with: pip install google-generativeai")
+            self.model = None
             return
             
         if not self.api_key:
-            logger.error("GOOGLE_AI_API_KEY not configured in settings")
-            self.client = None
+            logger.error("GOOGLE_AI_API_KEY not configured in settings. Please set GOOGLE_AI_API_KEY in your .env file or settings.py")
+            logger.error("Get a new API key from: https://aistudio.google.com/apikey")
+            self.model = None
+            return
+        
+        if len(self.api_key.strip()) < 10:
+            logger.error(f"GOOGLE_AI_API_KEY appears to be invalid (too short). Current length: {len(self.api_key)}")
+            self.model = None
             return
         
         try:
@@ -68,11 +74,22 @@ class MovingChecklistGenerator:
                 try:
                     available_models = [m.name for m in genai.list_models()]
                     logger.error(f"None of the preferred models are available. Available models: {available_models}")
+                    logger.error("This might indicate an invalid API key or API access issues.")
                 except Exception as list_error:
-                    logger.error(f"Failed to list available models: {list_error}")
+                    error_str = str(list_error).lower()
+                    if 'api key' in error_str or 'authentication' in error_str or 'permission' in error_str:
+                        logger.error(f"API key authentication failed: {list_error}")
+                        logger.error("Please verify your GOOGLE_AI_API_KEY is valid and has proper permissions.")
+                    else:
+                        logger.error(f"Failed to list available models: {list_error}")
                     
         except Exception as e:
-            logger.error(f"Failed to initialize Google AI: {e}")
+            error_str = str(e).lower()
+            if 'api key' in error_str or 'authentication' in error_str or 'permission' in error_str:
+                logger.error(f"Google AI API authentication failed: {e}")
+                logger.error("Please verify your GOOGLE_AI_API_KEY is valid and has proper permissions.")
+            else:
+                logger.error(f"Failed to initialize Google AI: {e}")
             self.model = None
     
     def _reinitialize_model(self):
@@ -164,8 +181,23 @@ class MovingChecklistGenerator:
                 )
                 checklist_text = response.text
             except Exception as gen_error:
+                # Check for specific error types
+                error_str = str(gen_error).lower()
+                
+                # Check for leaked API key error
+                if 'leaked' in error_str or 'reported as leaked' in error_str:
+                    error_msg = "Your Google AI API key has been reported as leaked and is disabled. Please generate a new API key from Google AI Studio."
+                    logger.error(f"API key leaked error: {gen_error}")
+                    logger.error("ACTION REQUIRED: Generate a new API key from https://aistudio.google.com/apikey")
+                    raise ValueError(error_msg)
+                
+                # Check for authentication/permission errors
+                if 'permission denied' in error_str or '403' in error_str or 'authentication' in error_str:
+                    error_msg = "Google AI API authentication failed. Please verify your API key is valid and has proper permissions."
+                    logger.error(f"API authentication error: {gen_error}")
+                    raise ValueError(error_msg)
+                
                 # If generation fails, try with a different model
-                error_str = str(gen_error)
                 if '404' in error_str or 'not found' in error_str.lower():
                     logger.warning(f"Model not available for generation: {gen_error}. Trying alternative models...")
                     self._reinitialize_model()

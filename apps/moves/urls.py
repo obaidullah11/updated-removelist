@@ -25,4 +25,11 @@ urlpatterns = [
     
     # AI-powered moving checklist generation
     path('generate-checklist/<uuid:move_id>/', views.generate_moving_checklist, name='generate_moving_checklist'),
+    path('convert-checklist-to-tasks/<uuid:move_id>/', views.convert_checklist_to_tasks, name='convert_checklist_to_tasks'),
+
+    # Expense management
+    path('expenses/<uuid:move_id>/', views.get_move_expenses, name='get_move_expenses'),
+    path('expenses/create/', views.create_move_expense, name='create_move_expense'),
+    path('expenses/<uuid:expense_id>/update/', views.update_move_expense, name='update_move_expense'),
+    path('expenses/<uuid:expense_id>/delete/', views.delete_move_expense, name='delete_move_expense'),
 ]

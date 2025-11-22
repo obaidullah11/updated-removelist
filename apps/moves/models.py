@@ -70,6 +70,9 @@ class Move(models.Model, ChoicesMixin):
     discount_type = models.CharField(max_length=20, choices=DISCOUNT_TYPE_CHOICES, default='none')
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0.00)
     
+    # Budget information
+    estimated_budget = models.DecimalField(max_digits=10, decimal_places=2, blank=True, null=True, help_text="Estimated moving budget")
+    
     special_items = models.TextField(blank=True, null=True)
     additional_details = models.TextField(blank=True, null=True)
     
@@ -223,3 +226,56 @@ class TaskAssignment(models.Model):
         
     def __str__(self):
         return f"Task: {self.timeline_event.title} assigned to {self.collaborator.first_name}"
+
+
+class MoveExpense(models.Model):
+    """
+    Model representing an expense for a move (ledger entry).
+    """
+    
+    CATEGORY_CHOICES = [
+        ('moving_company', 'Moving Company'),
+        ('packing_supplies', 'Packing Supplies'),
+        ('storage', 'Storage'),
+        ('utilities', 'Utilities Setup'),
+        ('cleaning', 'Cleaning Services'),
+        ('insurance', 'Insurance'),
+        ('transportation', 'Transportation'),
+        ('food', 'Food & Meals'),
+        ('accommodation', 'Accommodation'),
+        ('other', 'Other'),
+    ]
+    
+    PAYMENT_METHOD_CHOICES = [
+        ('cash', 'Cash'),
+        ('credit_card', 'Credit Card'),
+        ('debit_card', 'Debit Card'),
+        ('bank_transfer', 'Bank Transfer'),
+        ('check', 'Check'),
+        ('other', 'Other'),
+    ]
+    
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    move = models.ForeignKey(Move, on_delete=models.CASCADE, related_name='expenses')
+    
+    # Expense details
+    description = models.CharField(max_length=200)
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    category = models.CharField(max_length=20, choices=CATEGORY_CHOICES, default='other')
+    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES, default='cash')
+    expense_date = models.DateField(default=timezone.now)
+    receipt = models.ImageField(upload_to='expense_receipts/', blank=True, null=True)
+    notes = models.TextField(blank=True, null=True)
+    
+    # Timestamps
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        db_table = 'move_expenses'
+        verbose_name = 'Move Expense'
+        verbose_name_plural = 'Move Expenses'
+        ordering = ['-expense_date', '-created_at']
+    
+    def __str__(self):
+        return f"{self.description} - ${self.amount} ({self.move})"

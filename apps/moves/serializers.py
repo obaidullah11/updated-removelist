@@ -4,7 +4,8 @@ Serializers for move management.
 from rest_framework import serializers
 from django.utils import timezone
 from django.db import models
-from .models import Move, MoveCollaborator, TaskAssignment
+
+from .models import Move, MoveCollaborator, TaskAssignment, MoveExpense
 from apps.common.validators import validate_name
 import logging
 
@@ -23,6 +24,7 @@ class MoveCreateSerializer(serializers.ModelSerializer):
             'from_property_type', 'to_property_type',   
             'current_property_floor_map', 'new_property_floor_map',
             'discount_type', 'discount_percentage',
+            'estimated_budget',
             'special_items', 'additional_details',
             'first_name', 'last_name', 'email'
         ]
@@ -88,6 +90,12 @@ class MoveCreateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Invalid discount type. Choose from: {', '.join(valid_choices)}")
         return value
     
+    def validate_estimated_budget(self, value):
+        """Validate that estimated budget is positive if provided."""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Estimated budget must be greater than zero.")
+        return value
+    
     def create(self, validated_data):
         """Create a move with the authenticated user."""
         user = self.context['request'].user
@@ -107,8 +115,23 @@ class MoveCreateSerializer(serializers.ModelSerializer):
         # Create the move first
         move = super().create(validated_data)
         
-        # Floor plan analysis and checklist generation are handled in views.py after move creation
-        # Both run asynchronously in background threads to avoid blocking the response
+        # Automatically analyze floor plan if provided
+        if move.current_property_floor_map:
+            try:
+                
+                analyzer = FloorPlanAnalyzer()
+                analysis_result = analyzer.analyze_floor_plan(move.id, move.current_property_floor_map.path)
+                
+                if analysis_result['success']:
+                    logger.info(f"Floor plan analysis completed for move {move.id}. "
+                              f"Created {analysis_result['rooms_created']} rooms with inventory.")
+                else:
+                    logger.warning(f"Floor plan analysis failed for move {move.id}: "
+                                 f"{analysis_result.get('error', 'Unknown error')}")
+                    
+            except Exception as e:
+                # Log error but don't fail move creation
+                logger.error(f"Floor plan analysis failed for move {move.id}: {str(e)}")
         
         return move
 
@@ -125,6 +148,7 @@ class MoveUpdateSerializer(serializers.ModelSerializer):
             'from_property_type', 'to_property_type',
             'current_property_floor_map', 'new_property_floor_map',
             'discount_type', 'discount_percentage',
+            'estimated_budget',
             'special_items', 'additional_details',
             'first_name', 'last_name', 'email', 'status'
         ]
@@ -187,6 +211,12 @@ class MoveUpdateSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError(f"Invalid discount type. Choose from: {', '.join(valid_choices)}")
         return value
     
+    def validate_estimated_budget(self, value):
+        """Validate that estimated budget is positive if provided."""
+        if value is not None and value <= 0:
+            raise serializers.ValidationError("Estimated budget must be greater than zero.")
+        return value
+    
     def validate_first_name(self, value):
         """Validate first name."""
         validate_name(value)
@@ -211,6 +241,7 @@ class MoveDetailSerializer(serializers.ModelSerializer):
             'from_property_type', 'to_property_type',
             'current_property_floor_map', 'new_property_floor_map',
             'discount_type', 'discount_percentage',
+            'estimated_budget',
             'special_items', 'additional_details',
             'first_name', 'last_name', 'email', 'status', 'progress',
             'created_at', 'updated_at', 'inventory_summary'
@@ -334,3 +365,49 @@ class TaskAssignmentSerializer(serializers.ModelSerializer):
             'task_title', 'assigned_at', 'notes'
         ]
         read_only_fields = ['id', 'assigned_at', 'collaborator_name', 'task_title']
+
+
+class MoveExpenseSerializer(serializers.ModelSerializer):
+    """Serializer for move expenses."""
+    
+    category_display = serializers.CharField(source='get_category_display', read_only=True)
+    payment_method_display = serializers.CharField(source='get_payment_method_display', read_only=True)
+    
+    class Meta:
+        model = MoveExpense
+        fields = [
+            'id', 'move', 'description', 'amount', 'category', 'category_display',
+            'payment_method', 'payment_method_display', 'expense_date',
+            'receipt', 'notes', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'category_display', 'payment_method_display']
+    
+    def validate_amount(self, value):
+        """Validate that amount is positive."""
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be greater than zero.")
+        return value
+    
+    def validate_move(self, value):
+        """Validate that move belongs to the user."""
+        user = self.context['request'].user
+        if value.user != user:
+            raise serializers.ValidationError("You can only add expenses to your own moves.")
+        return value
+
+
+class MoveExpenseCreateSerializer(serializers.ModelSerializer):
+    """Serializer for creating expenses."""
+    
+    class Meta:
+        model = MoveExpense
+        fields = [
+            'move', 'description', 'amount', 'category', 'payment_method',
+            'expense_date', 'receipt', 'notes'
+        ]
+    
+    def validate_amount(self, value):
+        """Validate that amount is positive."""
+        if value <= 0:
+            raise serializers.ValidationError("Amount must be greater than zero.")
+        return value

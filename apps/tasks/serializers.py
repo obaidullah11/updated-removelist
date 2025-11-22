@@ -104,6 +104,7 @@ class TaskDetailSerializer(serializers.ModelSerializer):
     location_display = serializers.CharField(source='get_location_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
     time_spent_formatted = serializers.SerializerMethodField()
+    week = serializers.SerializerMethodField()
     
     class Meta:
         model = Task
@@ -112,11 +113,11 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             'location', 'location_display', 'priority', 'priority_display',
             'completed', 'completed_at', 'due_date', 'assigned_to', 'assigned_to_name',
             'collaborator', 'collaborator_name', 'is_external', 'external_url',
-            'subtasks', 'time_spent', 'time_spent_formatted', 'created_at'
+            'subtasks', 'time_spent', 'time_spent_formatted', 'created_at', 'week'
         ]
         read_only_fields = [
             'id', 'category_display', 'location_display', 'priority_display',
-            'assigned_to_name', 'collaborator_name', 'time_spent_formatted', 'created_at'
+            'assigned_to_name', 'collaborator_name', 'time_spent_formatted', 'created_at', 'week'
         ]
     
     def get_assigned_to_name(self, obj):
@@ -131,6 +132,29 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             return f"{obj.collaborator.first_name} {obj.collaborator.last_name}".strip()
         return None
     
+    def get_week(self, obj):
+        """Calculate week number from due_date and move_date."""
+        if not obj.due_date or not obj.move or not obj.move.move_date:
+            return 0
+        
+        from datetime import timedelta
+        move_date = obj.move.move_date
+        due_date = obj.due_date.date()
+        
+        # Calculate days difference
+        days_diff = (move_date - due_date).days
+        
+        # Calculate week using the same formula as backend: N = (days_diff + 3) / 7
+        # This reverses: due_date = (move_date - N weeks) + 3 days
+        calculated_week = round((days_diff + 3) / 7)
+        
+        # Clamp to valid range (0-8)
+        if calculated_week >= 8:
+            return 8
+        if calculated_week <= 0:
+            return 0
+        return calculated_week
+    
     def get_time_spent_formatted(self, obj):
         """Get formatted time spent."""
         if obj.time_spent:
@@ -139,6 +163,29 @@ class TaskDetailSerializer(serializers.ModelSerializer):
             seconds = obj.time_spent % 60
             return f"{hours:02d}:{minutes:02d}:{seconds:02d}"
         return "00:00:00"
+    
+    def get_week(self, obj):
+        """Calculate week number from due_date and move_date."""
+        if not obj.due_date or not obj.move or not obj.move.move_date:
+            return 0
+        
+        from datetime import timedelta
+        move_date = obj.move.move_date
+        due_date = obj.due_date.date()
+        
+        # Calculate days difference
+        days_diff = (move_date - due_date).days
+        
+        # Calculate week using the same formula as backend: N = (days_diff + 3) / 7
+        # This reverses: due_date = (move_date - N weeks) + 3 days
+        calculated_week = round((days_diff + 3) / 7)
+        
+        # Clamp to valid range (0-8)
+        if calculated_week >= 8:
+            return 8
+        if calculated_week <= 0:
+            return 0
+        return calculated_week
 
 
 class TaskListSerializer(serializers.ModelSerializer):
@@ -149,17 +196,18 @@ class TaskListSerializer(serializers.ModelSerializer):
     collaborator_name = serializers.SerializerMethodField()
     category_display = serializers.CharField(source='get_category_display', read_only=True)
     priority_display = serializers.CharField(source='get_priority_display', read_only=True)
+    week = serializers.SerializerMethodField()
     
     class Meta:
         model = Task
         fields = [
             'id', 'title', 'category_display', 'priority_display',
             'completed', 'due_date', 'assigned_to_name', 'collaborator_name',
-            'is_external', 'created_at'
+            'is_external', 'created_at', 'week'
         ]
         read_only_fields = [
             'id', 'category_display', 'priority_display', 'assigned_to_name', 
-            'collaborator_name', 'created_at'
+            'collaborator_name', 'created_at', 'week'
         ]
     
     def get_assigned_to_name(self, obj):
