@@ -311,7 +311,10 @@ GOOGLE_SERVICE_ACCOUNT_JSON = config('GOOGLE_SERVICE_ACCOUNT_JSON',
                                     default=os.path.join(BASE_DIR, 'apps/bookings/service_account.json'))
 
 # Google AI (Gemini) settings
-GOOGLE_AI_API_KEY = config('GOOGLE_AI_API_KEY', default='AIzaSyBchrqmw260YjU6Yq1hD6CBsHSkKPAFyus')
+# IMPORTANT: Never commit your API key to version control!
+# Set GOOGLE_AI_API_KEY in your .env file or environment variables
+# Get a new API key from: https://aistudio.google.com/apikey
+GOOGLE_AI_API_KEY = config('GOOGLE_AI_API_KEY', default='')
 
 # Rate limiting (if using django-ratelimit)
 RATELIMIT_USE_CACHE = 'default'
